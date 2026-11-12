@@ -4,7 +4,6 @@
 
 import dash
 from dash import html, dcc, dash_table, Input, Output, State
-from pathlib import Path
 import pandas as pd
 import numpy as np
 
@@ -16,15 +15,9 @@ import plotly.graph_objects as go
 # 2- LOAD THE CLEANED DATASET
 # -------------------------------------------------------------
 
-# Get the folder containing this Python file.
-APP_DIR = Path(__file__).resolve().parent
-
-# Build the CSV path relative to the application file,
-# regardless of where the program is launched from.
-DATA_FILE = APP_DIR / "happiness15-19.csv"
 
 # Load the cleaned dataset.
-happiness = pd.read_csv(DATA_FILE)
+happiness = pd.read_csv("happiness15-19.csv")
 
 available_years = [
     int(year)
