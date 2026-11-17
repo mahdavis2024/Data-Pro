@@ -2735,7 +2735,128 @@ def update_distribution_grid(selected_year, selected_points):
         f"Report Year: {selected_year}",
         f"Countries displayed: {len(filtered_data)}"
     )
+# -------------------------------------------------------------
+# CALLBACK: CONFIGURE THE TABLE'S NUMERIC RANGE
+# -------------------------------------------------------------
 
+@app.callback(
+    Output("table-numeric-range", "min"),
+    Output("table-numeric-range", "max"),
+    Output("table-numeric-range", "value"),
+    Output("table-numeric-range", "step"),
+    Output("table-range-label", "children"),
+
+    Input("table-variable-filter", "value")
+)
+def configure_table_range(selected_variable):
+    """
+    Update the numeric range slider when the selected
+    filtering variable changes.
+    """
+
+    if selected_variable == "Rank":
+        variable_min = int(
+            happiness[selected_variable].min()
+        )
+
+        variable_max = int(
+            happiness[selected_variable].max()
+        )
+
+        slider_step = 1
+
+    else:
+        variable_min = round(
+            float(happiness[selected_variable].min()),
+            3
+        )
+
+        variable_max = round(
+            float(happiness[selected_variable].max()),
+            3
+        )
+
+        slider_step = 0.001
+
+    readable_name = numeric_filter_labels[selected_variable]
+
+    return (
+        variable_min,
+        variable_max,
+        [variable_min, variable_max],
+        slider_step,
+        f"{readable_name} range:"
+    )
+
+# -------------------------------------------------------------
+# CALLBACK: FILTER THE INTERACTIVE TABLE
+# -------------------------------------------------------------
+
+@app.callback(
+    Output("happiness-table", "data"),
+    Output("table-record-count", "children"),
+    Output("happiness-table", "page_current"),
+
+    Input("table-country-filter", "value"),
+    Input("table-year-filter", "value"),
+    Input("table-variable-filter", "value"),
+    Input("table-numeric-range", "value")
+)
+def update_happiness_table(
+    selected_countries,
+    selected_years,
+    selected_variable,
+    selected_range
+):
+    """
+    Filter the table using country, year, and numeric-range
+    selections.
+    """
+
+    filtered_data = happiness.copy()
+
+    # Filter by selected countries.
+    # An empty dropdown selection means all countries.
+    if selected_countries:
+        filtered_data = filtered_data[
+            filtered_data["Country"].isin(selected_countries)
+        ]
+
+    # Filter by report-year range.
+    first_year, last_year = selected_years
+
+    filtered_data = filtered_data[
+        filtered_data["Year"].between(
+            first_year,
+            last_year
+        )
+    ]
+
+    # Filter using the selected numeric variable.
+    minimum_value, maximum_value = selected_range
+
+    filtered_data = filtered_data[
+        filtered_data[selected_variable].between(
+            minimum_value,
+            maximum_value
+        )
+    ]
+
+    # Use a consistent display order.
+    filtered_data = filtered_data.sort_values(
+        by=["Year", "Rank"],
+        ascending=[True, True]
+    )
+
+    record_count = len(filtered_data)
+
+    return (
+        filtered_data.to_dict("records"),
+        f"Records matching the selected filters: {record_count}",
+
+        # Return to the first page whenever filters change.
+        0
+    )
 # -------------------------------------------------------------
 # 22- RUN THE COMPLETE DASH APPLICATION
 # -------------------------------------------------------------
